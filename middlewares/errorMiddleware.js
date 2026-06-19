@@ -1,0 +1,85 @@
+import AppError from "../utils/appError.js";
+
+// Error Handeler in development mode
+const devErrors = (res, error) => {
+    res.status(error.statusCode).json({
+        status: error.status,
+        message: error.message,
+        error: error,
+        stackTrace: error.stack
+    });
+}
+
+// Handelling mongoose error
+// 1- Cast Errors
+const handelCastError = (error) => {
+    return new AppError(`👉 Invalid value '${error.value}'  for property '${error.path}'`, 400);
+}
+
+// 2- Dublicate Errors
+const dublicateKeyHandler = (error) => {
+    const field = Object.keys(error.keyValue)[0];
+    const value = error.keyValue[field];
+    return new AppError(`👉 A document with field '${field}' and value '${value}' already exist.`, 400);
+}
+
+// 3- Valiation Errors
+const handleValidationError = (error) => {
+    const errors = Object.values(error.errors).map(val => val.message);
+    const message = errors.join(', ')
+    return new AppError(`👉 Invalid input data '${message}'`, 400);
+}
+
+// 4- Invalid JWT expired
+const jwtExpired = () => {
+    return new AppError('👉 Invalid token, please login again..', 401);
+}
+
+// 5- Invalid json web token
+const jwtInvalidSignture = () => {
+    return new AppError('👉 Invalid token, please login again..', 401);
+}
+
+// Error handeler in production mode
+const prodErrors = (res, error) => {
+    console.log("🔥 PROD ERROR HIT");
+    if(error.isOperational) {
+        console.log("👉 Sending:", error.message);
+        res.status(error.statusCode).json({
+            status: error.status,
+            message: error.message
+        })
+    }else {
+        res.status(error.statusCode).json({
+            status: 'error',
+            message: 'Something went wrong, please try again later'
+        })
+    }
+}
+
+export default (error, req, res, next) => {
+    error.statusCode = error.statusCode || 500;
+    error.status = error.status || 'error';
+    
+    if(process.env.NODE_ENV === 'development'){
+        devErrors(res, error);
+    }else {
+        let appError = error;
+        if(error.name === 'CastError'){
+            appError = handelCastError(error);
+        }
+        if(error.code === 11000){
+            appError = dublicateKeyHandler(error);
+        }
+        if(error.name === 'ValidationError'){
+            appError = handleValidationError(error);
+        }
+        if(error.name === 'TokenExpiredError'){
+            appError = jwtExpired();
+        }
+        if(error.name === 'jsonWebTokenError'){
+            appError = jwtInvalidSignture();
+        }
+        prodErrors(res, appError);
+    }
+}
