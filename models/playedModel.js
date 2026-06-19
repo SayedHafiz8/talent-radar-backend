@@ -8,7 +8,7 @@ const playerSchema = new mongoose.Schema({
     },
     city: {
         type: String,
-        requied: true,
+        required: true,
     },
     address: {
         type: String,

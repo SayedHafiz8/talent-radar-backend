@@ -15,7 +15,7 @@ export const getAllValidate = [
         .optional()
         .isMongoId().withMessage('Invalid Team Id')
         .custom((val) => 
-            Hotel.findById(val).then((team) => {
+            Team.findById(val).then((team) => {
                 console.log(team)
                 if(!team){
                     return Promise.reject(new Error(`No team for this id: ${val}`))

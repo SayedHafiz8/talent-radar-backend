@@ -77,9 +77,7 @@ export const protect = asyncHandler(async(req,res, next) => {
 
 export const allowedTo = (...roles) => {
     return asyncHandler(async(req, res, next) => {
-        console.log("User Role:", req.user.role);
-        console.log("Allowed Roles:", roles);
-
+        
         if(!roles.includes(req.user.role)) {
             return next(new AppError("You are not allowed to access this route", 403));
         }
