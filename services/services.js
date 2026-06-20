@@ -2,39 +2,59 @@ import asyncHandler from "express-async-handler";
 
 import AppError from "../utils/appError.js";
 import ApiFeature from "../utils/apiFeatures.js";
-import { model } from "mongoose";
 
+// helper بسيط بيطبق populate لو موجود، عشان متكررش نفس الـ if في كل دالة
+const applyPopulate = (query, populateOptions) => {
+    if (!populateOptions) return query;
 
-export const creating = (model, field = null) => {
-    return asyncHandler(async(req, res, next)=>{
-        if(field){
+    if (Array.isArray(populateOptions)) {
+        populateOptions.forEach((opt) => {
+            query = query.populate(opt);
+        });
+    } else {
+        query = query.populate(populateOptions);
+    }
+
+    return query;
+};
+
+export const creating = (model, field = null, populateOptions = null) => {
+    return asyncHandler(async (req, res, next) => {
+        if (field) {
             req.body[field] = req.user._id;
         }
-        console.log(model.schema.path("coach").options.ref)
-        const document = await model.create(req.body);
+
+        let document = await model.create(req.body);
+
+        if (populateOptions) {
+            document = await applyPopulate(model.findById(document._id), populateOptions);
+        }
+
         res.status(201).json({
             status: "Success",
             data: {
-                document
-            }
-        })
-    })
-}
+                document,
+            },
+        });
+    });
+};
 
-export const gettingAll = (model, refFiled = null) => {
-    return asyncHandler(async(req, res, next) => {
-        
+export const gettingAll = (model, refFiled = null, searchFields = [], populateOptions = null) => {
+    return asyncHandler(async (req, res, next) => {
         const documentCount = await model.countDocuments();
         const features = new ApiFeature(model.find(), req.query, req.params, req.user)
-        .filter(refFiled)
-        .sort()
-        .limitFields()
-        .search()
-        .paginate(documentCount);
+            .filter(refFiled)
+            .sort()
+            .limitFields()
+            .search(searchFields)
+            .paginate(documentCount);
 
-        const {query, pagination} = features
-        const documents = await query
-        if(!documents){
+        const { query, pagination } = features;
+
+        const finalQuery = applyPopulate(query, populateOptions);
+        const documents = await finalQuery;
+
+        if (!documents) {
             return next(new AppError(`No documents yet`, 404));
         }
         res.status(200).json({
@@ -42,89 +62,110 @@ export const gettingAll = (model, refFiled = null) => {
             count: documents.length,
             pagination,
             data: {
-                documents
-            }
-        })
-    })
-}
+                documents,
+            },
+        });
+    });
+};
 
-export const gettingSpecific = (model) => {
-    return asyncHandler(async(req, res, next) => {
-        const {id} = req.params;
-        const document = await model.findById(id);
-        if(!document){
+export const gettingSpecific = (model, populateOptions = null) => {
+    return asyncHandler(async (req, res, next) => {
+        const { id } = req.params;
+
+        const query = applyPopulate(model.findById(id), populateOptions);
+        const document = await query;
+
+        if (!document) {
             return next(new AppError(`No document for this Id '${id}'`, 404));
         }
         res.status(200).json({
             status: "Success",
             data: {
-                document
-            }
-        })
-    })
-}
+                document,
+            },
+        });
+    });
+};
 
-export const updating = (model) => {
-    return asyncHandler(async (req,res, next) => {
-        
+export const updating = (model, populateOptions = null) => {
+    return asyncHandler(async (req, res, next) => {
         const body = req.body;
         const id = req.params.id;
-        const document = await model.findByIdAndUpdate(id, body, {returnDocument :"after", runValidators: true})
-        if(!document){
-            return next(new AppError(`No model for This Id: ${id}`))
+
+        const query = model.findByIdAndUpdate(id, body, {
+            returnDocument: "after",
+            runValidators: true,
+        });
+
+        const document = await applyPopulate(query, populateOptions);
+
+        if (!document) {
+            return next(new AppError(`No document for This Id: ${id}`, 404));
         }
         res.status(200).json({
             status: "Success",
             data: {
-                document
-            }
-        })
-
-
-    })
-}
+                document,
+            },
+        });
+    });
+};
 
 export const softDelete = (model) => {
-    return asyncHandler(async(req, res, next)=> {
+    return asyncHandler(async (req, res, next) => {
         const id = req.params.id;
-        const document = await model.findByIdAndUpdate(id, {
-        active: false,
-        }, {returnDocument :"after", runValidators: true})
-        if(!document){
-            return next(new AppError(`No ${model} for This Id: ${id}`))
+        const document = await model.findByIdAndUpdate(
+            id,
+            {
+                active: false,
+            },
+            { returnDocument: "after", runValidators: true }
+        );
+        if (!document) {
+            return next(new AppError(`No document for This Id: ${id}`, 404));
         }
         res.status(204).json({
-            status: "success"
-        })
-    })
-}
+            status: "success",
+        });
+    });
+};
 
-export const restoring = (model) => {
-    return asyncHandler(async (req, res, next) =>{
+export const restoring = (model, populateOptions = null) => {
+    return asyncHandler(async (req, res, next) => {
         const id = req.params.id;
-        const document = await model.findByIdAndUpdate(id, {
-        active: true,
-        }, {returnDocument :"after", runValidators: true}).setOptions({ bypassFilter: true });
 
-        if(!document){
-            return next(new AppError(`No model for This Id: ${id}`))
+        const query = model
+            .findByIdAndUpdate(
+                id,
+                {
+                    active: true,
+                },
+                { returnDocument: "after", runValidators: true }
+            )
+            .setOptions({ bypassFilter: true });
+
+        const document = await applyPopulate(query, populateOptions);
+
+        if (!document) {
+            return next(new AppError(`No document for This Id: ${id}`, 404));
         }
         res.status(200).json({
             status: "Success",
             data: {
-                hotel: document
-            }
-        })
-    })
-}
+                document,
+            },
+        });
+    });
+};
 
-export const deleteOne = (model) => asyncHandler(async(req ,res, next) => {
-    const {id} = req.params;
-    const document = await model.findByIdAndDelete(id);
-    if(!document){
-        return next(new AppError(`No ${model} for This Id: ${id}`))
-    }
-    res.status(204).json({
-        status: "success"
-    })
-})
+export const deleteOne = (model) =>
+    asyncHandler(async (req, res, next) => {
+        const { id } = req.params;
+        const document = await model.findByIdAndDelete(id);
+        if (!document) {
+            return next(new AppError(`No document for This Id: ${id}`, 404));
+        }
+        res.status(204).json({
+            status: "success",
+        });
+    });

@@ -14,8 +14,11 @@ class ApiFeature {
         this.query.model.schema.path(refField) &&
         this.query.model.schema.path(refField).options.ref 
         ){
-            if(this.params.id){
-                filterObject = {[refField]: this.params.id}
+            const paramId = this.params.playerId 
+            || this.params.id;
+
+            if(paramId){
+                filterObject = {[refField]: paramId}
             } else if (this.user&& this.user.role !== "admin") {
                 // ✅ حالة الكوتش - id من الـ logged-in user
                 filterObject = { [refField]: this.user._id };
@@ -77,21 +80,18 @@ class ApiFeature {
         return this;
     }
 
-    search() {
-        if(this.queryParams.keyword){
-            const fields = ['preferredFoot', 'name', 'position'];
+    search(fields = []) {
+        if (this.queryParams.keyword && fields.length) {
             const keywords = this.queryParams.keyword.trim().split(" ");
 
             const queryObj = {
-            $and: keywords.map(word => ({
-                $or: fields.map(field => ({
-                [field]: { $regex: word, $options: 'i' }
+                $and: keywords.map(word => ({
+                    $or: fields.map(field => ({
+                        [field]: { $regex: word, $options: 'i' }
+                    }))
                 }))
-            }))
             };
 
-            
-            
             this.query = this.query.find(queryObj);
         }
         return this;

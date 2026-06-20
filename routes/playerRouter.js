@@ -3,11 +3,13 @@ import { getAll, create, getSpecific, deleting, update, setUserIdToBody } from "
 import { createValidate } from "../utils/validation/playerValidation.js";
 import { allowedTo, protect } from "../controllers/authController.js";
 import scoutingRouter from "./scoutingReportRouter.js";
+import mediaRouter from "./playerMediaRouter.js";
 
 // (mergeParams) using for access parameters on other routers
 const playerRouter = express.Router({mergeParams: true});
 
-playerRouter.use('/:id/reports', scoutingRouter);
+playerRouter.use('/:playerId/reports', scoutingRouter);
+playerRouter.use('/:playerId/media', mediaRouter)
 
 playerRouter.route('/')
             .get(protect, allowedTo("coach", "admin"), getAll)

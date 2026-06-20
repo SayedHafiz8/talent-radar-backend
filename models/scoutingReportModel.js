@@ -150,53 +150,56 @@ scoutingReportSchema.pre("save", function () {
 scoutingReportSchema.pre("findOneAndUpdate", async function () {
     const update = this.getUpdate();
 
-    // لو مفيش تعديل على أي تقييم — مش محتاج نحسب
-    if (!update.technical && !update.physical && !update.mental) {
-        return;
-    }
+    const hasNestedUpdate =
+        update.technical || update.physical || update.mental ||
+        Object.keys(update).some(key =>
+            key.startsWith("technical.") ||
+            key.startsWith("physical.") ||
+            key.startsWith("mental.")
+        );
 
-    // ① جيب الـ document الحالي من الـ DB
+    if (!hasNestedUpdate) return;
+
     const current = await this.model.findOne(this.getQuery()).lean();
     if (!current) return;
 
-    // ② ادمج القيم الجديدة على القيم الحالية (deep merge)
+    // لازم تدمج الـ dot notation كمان مش بس nested objects
+    const flatUpdate = {};
+    for (const key in update) {
+        if (key.includes(".")) {
+            const [parent, child] = key.split(".");
+            flatUpdate[parent] = { ...(flatUpdate[parent] || {}), [child]: update[key] };
+        }
+    }
+
     const merged = {
-        technical: { ...current.technical, ...update.technical },
-        physical:  { ...current.physical,  ...update.physical  },
-        mental:    { ...current.mental,     ...update.mental    },
+        technical: { ...current.technical, ...update.technical, ...flatUpdate.technical },
+        physical:  { ...current.physical,  ...update.physical,  ...flatUpdate.physical  },
+        mental:    { ...current.mental,     ...update.mental,    ...flatUpdate.mental    },
     };
 
-    // ③ احسب الـ overallRating من القيم المدموجة
     const allScores = [
-        merged.technical.passing,
-        merged.technical.dribbling,
-        merged.technical.shooting,
-        merged.technical.ballControl,
-        merged.physical.speed,
-        merged.physical.stamina,
-        merged.physical.strength,
-        merged.physical.agility,
-        merged.mental.positioning,
-        merged.mental.decisionMaking,
-        merged.mental.teamwork,
-        merged.mental.attitude,
+        merged.technical.passing, merged.technical.dribbling,
+        merged.technical.shooting, merged.technical.ballControl,
+        merged.physical.speed, merged.physical.stamina,
+        merged.physical.strength, merged.physical.agility,
+        merged.mental.positioning, merged.mental.decisionMaking,
+        merged.mental.teamwork, merged.mental.attitude,
     ];
 
-    const sum = allScores.reduce((acc, val) => acc + val, 0);
-    update.overallRating = parseFloat((sum / allScores.length).toFixed(2));
-    
+    update.overallRating = parseFloat(
+        (allScores.reduce((a, v) => a + v, 0) / allScores.length).toFixed(2)
+    );
 });
 
+scoutingReportSchema.index(
+    { player: 1, coach: 1, matchDate: 1 },
+    { unique: true }
+);
+scoutingReportSchema.index({ player: 1, createdAt: -1 });
+
 // ===== Populate Player و Coach تلقائي =====
-scoutingReportSchema.pre(/^find/, function () {
-    this.populate({
-        path: "player",
-        select: "name position ageGroup -_id",
-    }).populate({
-        path: "coach",
-        select: "name -_id",
-    });
-});
+
 
 const ScoutingReport = mongoose.model("ScoutingReport", scoutingReportSchema);
 

@@ -7,7 +7,7 @@ import { creating, deleteOne, gettingAll, gettingSpecific, updating } from "../s
 import AppError from "../utils/appError.js";
 
 export const setPlayerToBody = (req, res, next) => {
-    if (!req.body.player) req.body.player = req.params.id;
+    req.body.player = req.params.playerId;
     next();
 };
 
@@ -19,7 +19,7 @@ export const create = creating(ScoutingReport, "coach");
 // @desc    Get all scouting reports
 // @route   GET /api/v1/scouting
 // @access  Private - coach & admin
-export const getAll = gettingAll(ScoutingReport, "player");
+export const getAll = gettingAll(ScoutingReport, "player", ["notes", "recommendation"]);
 
 // @desc    Get specific scouting report
 // @route   GET /api/v1/scouting/:id
@@ -36,20 +36,4 @@ export const update = updating(ScoutingReport);
 // @access  Private - admin only
 export const deleting = deleteOne(ScoutingReport);
 
-export const checkPlayerOwnership = asyncHandler(async (req, res, next) => {
-    if (req.user.role === "admin") return next();
 
-    const player = await Player.collection.findOne(
-        { _id: new mongoose.Types.ObjectId(req.params.id) },
-        { projection: { coach: 1 } }
-    );
-    if (!player) {
-        return next(new AppError("Player not found", 404));
-    }
-
-    if (player.coach.toString() !== req.user._id.toString()) {
-        return next(new AppError("You are not allowed to access this player's data", 403));
-    }
-
-    next();
-});

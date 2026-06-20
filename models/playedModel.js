@@ -4,7 +4,7 @@ import AgeGroup from "./ageGroupModel.js";
 const playerSchema = new mongoose.Schema({
     name: {
         type: String,
-        requied: true,
+        required: true,
     },
     city: {
         type: String,
@@ -39,11 +39,11 @@ const playerSchema = new mongoose.Schema({
     },
     preferredFoot: {
         type: String,
-        requied: true
+        required: true
     },
     nationality: {
         type: String,
-        requierd: true
+        required: true
     },
     phoneNumber: {
         type: String,
@@ -78,12 +78,7 @@ function calculateAge(dateOfBirth) {
     return age;
 }
 
-playerSchema.pre(/^find/,  function() {
-    this.populate({
-        path: "coach",
-        select: "name -_id"
-    });
-});
+
 
 
 playerSchema.pre('save', async function () {
@@ -106,26 +101,24 @@ playerSchema.pre('save', async function () {
     
 });
 
-playerSchema.pre('findOneAndUpdate', async function (next) {
+playerSchema.pre('findOneAndUpdate', async function () {
     const update = this.getUpdate();
 
     if (update.dateOfBirth) {
         const age = calculateAge(update.dateOfBirth);
 
         if (age < 8 || age > 18) {
-        return next(new Error(`Age must be between (8 - 18) `));
+        throw new Error(`Age must be between (8 - 18) `);
         }
 
         const ageGroup = await AgeGroup.findOne({ age });
 
         if (!ageGroup) {
-        return next(new Error('AgeGroup not found'));
+        throw new Error('AgeGroup not found');
         }
 
         update.ageGroup = ageGroup._id;
     }
-
-    next();
 });
 
 const Player = mongoose.model('Player', playerSchema);
