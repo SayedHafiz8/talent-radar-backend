@@ -21,6 +21,8 @@ const server = app.listen(port, () => {
     console.log("Server running 🚀");
 });
 
+server.timeout = 120000;
+
 // Handlling Rejected Promises
 process.on('unhandledRejection', (error) => {
     console.log(`${error.name}: ${error.message}`);

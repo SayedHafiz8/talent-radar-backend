@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
-import { check, body } from "express-validator";
+import { check, body, query } from "express-validator";
 
 import validatorMiddleware from "../../middlewares/validatorMiddleware.js";
 import Team from "../../models/teamModel.js";
 import Player from "../../models/playedModel.js";
+
+
 
 export const getSpecificValidate = [
     check('id').isMongoId().withMessage("Invalid Player Id"),
@@ -22,6 +24,32 @@ export const getAllValidate = [
                 }
             })
         ),
+        query("keyword")
+        .optional()
+        .isString()
+        .withMessage("keyword must be a string")
+        .isLength({ max: 50 })
+        .withMessage("keyword too long"),
+
+    query("position")
+        .optional()
+        .isString()
+        .withMessage("Invalid position"),
+
+    query("preferredFoot")
+        .optional()
+        .isIn(["right", "left", "both"])
+        .withMessage("preferredFoot must be: right, left, or both"),
+
+    query("nationality")
+        .optional()
+        .isString()
+        .withMessage("Invalid nationality"),
+
+    query("ageGroup")
+        .optional()
+        .isMongoId()
+        .withMessage("Invalid ageGroup id"),
     validatorMiddleware
 ];
 

@@ -19,7 +19,7 @@ export const create = creating(Player, "coach");
 // @desc    Get all age groups
 // @route   POST api/v1/ages
 // @access  private
-export const getAll = gettingAll(Player, "coach", ["name", "position", "preferredFoot"]);
+export const getAll = gettingAll(Player, "coach", ["name", "position", "preferredFoot", "nationality", "city"]);
 
 // @desc    Get specific age 
 // @route   POST api/v1/ages/:id

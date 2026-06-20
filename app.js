@@ -1,4 +1,8 @@
 import express from "express";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 
 import ageRouter from "./routes/ageGroupRouter.js";
 import AppError from "./utils/appError.js";
@@ -13,7 +17,24 @@ import mediaRouter from "./routes/playerMediaRouter.js";
 
 // Express Meddilware
 const app = express();
+
+
+// security middleware
+app.use(helmet());
+app.use(cors({ origin: process.env.CLIENT_URL }));
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: {
+        status: "error",
+        message: "Too many requests, please try again later"
+    }
+});
+app.use("/api", limiter);
+
+// Body parser
 app.use(express.json())
+app.use(cookieParser());
 
 // ADDING ROUTES FOR APP
 app.use('/api/v1/ages', ageRouter);

@@ -41,13 +41,15 @@ export const creating = (model, field = null, populateOptions = null) => {
 
 export const gettingAll = (model, refFiled = null, searchFields = [], populateOptions = null) => {
     return asyncHandler(async (req, res, next) => {
-        const documentCount = await model.countDocuments();
         const features = new ApiFeature(model.find(), req.query, req.params, req.user)
             .filter(refFiled)
-            .sort()
-            .limitFields()
             .search(searchFields)
-            .paginate(documentCount);
+
+        const documentCount = await model.countDocuments(
+            features.query.getFilter()
+        );
+
+        features.sort().limitFields().paginate(documentCount);
 
         const { query, pagination } = features;
 

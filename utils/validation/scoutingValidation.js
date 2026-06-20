@@ -13,7 +13,7 @@ const requiredRating = (path) =>
         .notEmpty()
         .withMessage(`${path} is required`)
         .bail()
-        .isInt({ min: 1, max: 10 })
+        .isFloat({ min: 1, max: 10 })
         .withMessage(`${path} must be a number between 1 and 10`);
 
 // rating field (1 -> 10) - اختيارية (للـ update)
@@ -79,7 +79,7 @@ export const createValidate = [
 // @desc    Validate update scouting report
 // @route   PATCH /api/v1/scouting/:id
 export const updateValidate = [
-    param("playerId").isMongoId().withMessage("Invalid player id"),
+    param("id").isMongoId().withMessage("Invalid player id"),
 
     body("matchDate")
         .optional()
@@ -114,13 +114,18 @@ export const updateValidate = [
 // @desc    Validate get specific scouting report
 // @route   GET /api/v1/scouting/:id
 export const getSpecificValidate = [
-    param("PlayerId").isMongoId().withMessage("Invalid player id"),
+    param("id").isMongoId().withMessage("Invalid player id"),
     validatorMiddleware,
 ];
 
 // @desc    Validate delete scouting report
 // @route   DELETE /api/v1/scouting/:id
 export const deleteValidate = [
-    param("PlayerId").isMongoId().withMessage("Invalid player id"),
+    param("id").isMongoId().withMessage("Invalid player id"),
+    validatorMiddleware,
+];
+
+export const statisticsValidate = [
+    param("playerId").isMongoId().withMessage("Invalid player id"),
     validatorMiddleware,
 ];

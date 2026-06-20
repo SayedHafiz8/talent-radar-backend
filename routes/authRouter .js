@@ -1,5 +1,5 @@
 import express from "express";
-import { changeLoggedUserPass, forgotPassword, login, protect, resetPassword, signup, updateLoggedUser, verifyResetPassword } from "../controllers/authController.js";
+import { changeLoggedUserPass, forgotPassword, login, logout, protect, refreshToken, resetPassword, signup, updateLoggedUser, verifyResetPassword } from "../controllers/authController.js";
 import { singupValidate, updateLoggedUserVal } from "../utils/validation/authValidation.js";
 import { changeUserPassword } from "../utils/validation/userValidation.js";
 
@@ -17,6 +17,8 @@ authRouter.route('/login')
 authRouter.route('/forgotPassword')
             .post(forgotPassword);
 
+authRouter.post('/logout', protect, logout);           
+authRouter.post('/refreshToken', refreshToken);
 
 authRouter.route('/verifyResetCode')
             .post(verifyResetPassword);
@@ -31,4 +33,6 @@ authRouter.route('/changeMyPassword')
 
 authRouter.route('/updateLoggedUser')
             .patch(protect, updateLoggedUserVal, updateLoggedUser);
+
+
 export default authRouter;

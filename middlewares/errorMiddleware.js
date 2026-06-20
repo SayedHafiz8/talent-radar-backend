@@ -32,7 +32,7 @@ const handleValidationError = (error) => {
 
 // 4- Invalid JWT expired
 const jwtExpired = () => {
-    return new AppError('👉 Invalid token, please login again..', 401);
+    return new AppError('👉 Your session has expired, please login again..', 401);
 }
 
 // 5- Invalid json web token
@@ -77,7 +77,7 @@ export default (error, req, res, next) => {
         if(error.name === 'TokenExpiredError'){
             appError = jwtExpired();
         }
-        if(error.name === 'jsonWebTokenError'){
+        if(error.name === 'JsonWebTokenError'){
             appError = jwtInvalidSignture();
         }
         prodErrors(res, appError);

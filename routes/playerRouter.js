@@ -1,6 +1,6 @@
 import express from "express";
 import { getAll, create, getSpecific, deleting, update, setUserIdToBody } from "../controllers/playerController.js";
-import { createValidate } from "../utils/validation/playerValidation.js";
+import { createValidate, getAllValidate, deleteValidate, getSpecificValidate, updateValidate } from "../utils/validation/playerValidation.js";
 import { allowedTo, protect } from "../controllers/authController.js";
 import scoutingRouter from "./scoutingReportRouter.js";
 import mediaRouter from "./playerMediaRouter.js";
@@ -12,14 +12,14 @@ playerRouter.use('/:playerId/reports', scoutingRouter);
 playerRouter.use('/:playerId/media', mediaRouter)
 
 playerRouter.route('/')
-            .get(protect, allowedTo("coach", "admin"), getAll)
+            .get(protect, allowedTo("coach", "admin"),getAllValidate ,getAll)
             .post(protect,allowedTo("coach"),setUserIdToBody, createValidate,create)
 
 
 playerRouter.route('/:id')
-            .get(protect,allowedTo("coach"),getSpecific)
-            .patch(protect,allowedTo("coach"),update)
-            .delete(protect,allowedTo("coach"),deleting)
+            .get(protect,allowedTo("coach"),getSpecificValidate,getSpecific)
+            .patch(protect,allowedTo("coach"),updateValidate,update)
+            .delete(protect,allowedTo("coach"),deleteValidate,deleting)
 
 
 export default playerRouter;
