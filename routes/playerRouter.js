@@ -1,6 +1,6 @@
 import express from "express";
-import { getAll, create, getSpecific, deleting, update, setUserIdToBody } from "../controllers/playerController.js";
-import { createValidate, getAllValidate, deleteValidate, getSpecificValidate, updateValidate } from "../utils/validation/playerValidation.js";
+import { getAll, create, getSpecific, deleting, update, setUserIdToBody, updatePlayerStatus } from "../controllers/playerController.js";
+import { createValidate, getAllValidate, deleteValidate, getSpecificValidate, updateValidate, updatePlayerStatusValidator } from "../utils/validation/playerValidation.js";
 import { allowedTo, protect } from "../controllers/authController.js";
 import scoutingRouter from "./scoutingReportRouter.js";
 import mediaRouter from "./playerMediaRouter.js";
@@ -21,5 +21,6 @@ playerRouter.route('/:id')
             .patch(protect,allowedTo("coach"),updateValidate,update)
             .delete(protect,allowedTo("coach"),deleteValidate,deleting)
 
-
+playerRouter.route('/:id/status')
+            .patch(protect,allowedTo('admin'), updatePlayerStatusValidator, updatePlayerStatus)
 export default playerRouter;

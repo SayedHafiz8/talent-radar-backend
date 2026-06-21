@@ -13,6 +13,7 @@ import userRouter from "./routes/userRouter.js";
 import authRouter from "./routes/authRouter .js";
 import scoutingRouter from "./routes/scoutingReportRouter.js";
 import mediaRouter from "./routes/playerMediaRouter.js";
+import dashboardRouter from "./routes/dashboardRouter.js";
 
 
 // Express Meddilware
@@ -43,7 +44,8 @@ app.use('/api/v1/players', playerRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/reports', scoutingRouter);
-app.use('/api/v1/media', mediaRouter)
+app.use('/api/v1/media', mediaRouter);
+app.use('/api/v1/dashboard', dashboardRouter)
 
 
 // DEFULT ROUTE

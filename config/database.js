@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 
 
-const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
+const clientOptions = { serverApi: { version: '1', strict: false, deprecationErrors: true } };
 export const dbConnection =async function run() {
   
     const uli = process.env.CONNECTION_STRING

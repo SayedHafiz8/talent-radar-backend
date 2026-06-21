@@ -18,9 +18,19 @@ const playerSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
-    position: {
-        type: String,
-        required: true
+    position:{
+        type:String,
+        enum:[
+        "GK",
+        "CB",
+        "LB",
+        "RB",
+        "CM",
+        "AM",
+        "LW",
+        "RW",
+        "ST"
+        ]
     },
     ageGroup: {
         type: mongoose.Schema.Types.ObjectId,
@@ -37,9 +47,9 @@ const playerSchema = new mongoose.Schema({
     weight: {
         type: Number,
     },
-    preferredFoot: {
-        type: String,
-        required: true
+    preferredFoot:{
+        type:String,
+        enum:["right","left","both"]
     },
     nationality: {
         type: String,
@@ -49,9 +59,14 @@ const playerSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    status: {
-        type:String
-        
+    status:{
+        type:String,
+        enum:[
+            "pending",
+            "selected",
+            "rejected"
+        ],
+        default:"pending"
     },
     notes: {
         type: String
@@ -61,7 +76,7 @@ const playerSchema = new mongoose.Schema({
     ref: 'User',
     required: true
 },
-});
+},{ timestamps: true });
 
 // Calculate Age
 function calculateAge(dateOfBirth) {
@@ -101,23 +116,39 @@ playerSchema.pre('save', async function () {
     
 });
 
+// Database indexes
+playerSchema.index({ coach: 1, createdAt:-1 });
+// search بالاسم
+playerSchema.index({ name: "text" });
+// فلترة بالمركز والقدم المفضلة
+playerSchema.index({ coach: 1, position: 1 });
+playerSchema.index({ coach: 1, preferredFoot: 1 });
+// فلترة بالفئة العمرية
+playerSchema.index({ coach: 1, ageGroup: 1 });
+
+
+
 playerSchema.pre('findOneAndUpdate', async function () {
+
     const update = this.getUpdate();
 
-    if (update.dateOfBirth) {
-        const age = calculateAge(update.dateOfBirth);
+    const data = update.$set || update;
 
-        if (age < 8 || age > 18) {
-        throw new Error(`Age must be between (8 - 18) `);
+    if(data.dateOfBirth){
+
+        const age = calculateAge(data.dateOfBirth);
+
+        if(age < 8 || age > 18){
+            throw new Error("Age must be between 8 - 18");
         }
 
-        const ageGroup = await AgeGroup.findOne({ age });
+        const ageGroup = await AgeGroup.findOne({age});
 
-        if (!ageGroup) {
-        throw new Error('AgeGroup not found');
+        if(!ageGroup){
+            throw new Error("AgeGroup not found");
         }
 
-        update.ageGroup = ageGroup._id;
+        data.ageGroup = ageGroup._id;
     }
 });
 

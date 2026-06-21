@@ -6,7 +6,6 @@ const playerMediaSchema = new mongoose.Schema(
             type: mongoose.Schema.ObjectId,
             ref: "Player",
             required: true,
-            index: true, // هتفلتر بيه كتير: "كل ميديا اللاعب ده"
         },
         uploadedBy: {
             type: mongoose.Schema.ObjectId,
@@ -39,6 +38,13 @@ const playerMediaSchema = new mongoose.Schema(
         timestamps: true,
     }
 );
+
+playerMediaSchema.index({ player: 1, createdAt: -1 }); // كل ميديا اللاعب مرتبة بالأحدث
+playerMediaSchema.index({ player: 1, type: 1 });        // فلترة صور أو فيديوهات
+playerMediaSchema.index({
+    title:"text",
+    description:"text"
+});
 
 const PlayerMedia = mongoose.model("PlayerMedia", playerMediaSchema);
 

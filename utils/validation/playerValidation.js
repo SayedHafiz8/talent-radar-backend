@@ -1,9 +1,10 @@
 import mongoose from "mongoose";
-import { check, body, query } from "express-validator";
+import { check, body, query, param } from "express-validator";
 
 import validatorMiddleware from "../../middlewares/validatorMiddleware.js";
 import Team from "../../models/teamModel.js";
 import Player from "../../models/playedModel.js";
+
 
 
 
@@ -74,6 +75,10 @@ export const createValidate = [
     check('weight').notEmpty().withMessage("Enter the weight of the player").isNumeric(),
     check('jerseyNum').notEmpty().withMessage("Enter The player T-shirt number").isNumeric(),
     check('position').notEmpty().withMessage("Enter the position of the player"),
+    body("status")
+        .not()
+        .exists()
+        .withMessage("status cannot be set manually"),
     validatorMiddleware
     
 ];
@@ -100,10 +105,32 @@ export const updateValidate = [
 
             return true;
         }),
+    body("status")
+        .not()
+        .exists()
+        .withMessage("status cannot be updated manually"),
     validatorMiddleware
 ];
 
 export const deleteValidate = [
     check('id').isMongoId().withMessage("Invalid player Id"),
+    validatorMiddleware
+];
+
+export const updatePlayerStatusValidator = [
+    param("id")
+        .isMongoId()
+        .withMessage("Invalid player id"),
+
+    body("status")
+        .notEmpty()
+        .withMessage("status is required")
+        .isIn([
+            "pending",
+            "selected",
+            "rejected"
+        ])
+        .withMessage("Invalid status"),
+
     validatorMiddleware
 ];

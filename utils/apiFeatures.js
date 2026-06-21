@@ -69,7 +69,6 @@ class ApiFeature {
         }
         return this;
     }
-
     limitFields(){
         if(this.queryParams.fields){
             const fields = this.queryParams.fields.split(',').join(' ');
@@ -79,20 +78,34 @@ class ApiFeature {
         }
         return this;
     }
-
     search(fields = []) {
-        if (this.queryParams.keyword && fields.length) {
-            const keywords = this.queryParams.keyword.trim().split(" ");
-
-            const queryObj = {
-                $and: keywords.map(word => ({
-                    $or: fields.map(field => ({
-                        [field]: { $regex: word, $options: 'i' }
-                    }))
-                }))
-            };
-
-            this.query = this.query.find(queryObj);
+        if (!this.queryParams.keyword || !fields.length) {
+            return this;
+        }
+        const keyword = this.queryParams.keyword.trim();
+        const regexSearch = {
+            $or: fields.map(field => ({
+                [field]: {
+                    $regex: keyword,
+                    $options: "i"
+                }
+            }))
+        };
+        if (fields.includes("name")) {
+            this.query = this.query.find({
+                $or: [
+                    {
+                        $text: {
+                            $search: keyword
+                        }
+                    },
+                    ...regexSearch.$or.filter(
+                        field => !("name" in field)
+                    )
+                ]
+            });
+        } else {
+            this.query = this.query.find(regexSearch);
         }
         return this;
     }

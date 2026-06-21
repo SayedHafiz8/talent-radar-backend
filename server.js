@@ -10,14 +10,21 @@ process.on('uncaughtException', (error) => {
 
 import app from "./app.js";
 import { dbConnection } from "./config/database.js";
+import { createServer } from "http";           
+import { initSocket } from "./socket/index.js"; 
+import { startDailySummary } from "./socket/handlers/dailySummary.js";
+
 
 
 const port = process.env.PORT;
 
-
 dbConnection()
 
-const server = app.listen(port, () => {
+const server = createServer(app)
+initSocket(server);
+startDailySummary();
+
+server.listen(port, () => {
     console.log("Server running 🚀");
 });
 

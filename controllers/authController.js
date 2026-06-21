@@ -86,15 +86,12 @@ export const login = asyncHandler(async (req, res, next) => {
 // refresh token
 // ============================
 export const refreshToken = asyncHandler(async (req, res, next) => {
-    
+    const token = req.cookies.refreshToken;
+
     if (!token) {
         return next(new AppError("No refresh token, please login again", 401));
     }
-    console.log(
-    "NOW:",
-    Math.floor(Date.now() / 1000)
-);
-
+    
     // تحقق من الـ token
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 

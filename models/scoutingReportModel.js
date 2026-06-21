@@ -197,6 +197,11 @@ scoutingReportSchema.index(
     { unique: true }
 );
 scoutingReportSchema.index({ player: 1, createdAt: -1 });
+scoutingReportSchema.index({ coach: 1, createdAt: -1 });
+scoutingReportSchema.index({
+    notes:"text",
+    recommendation:"text"
+});
 
 // ===== Populate Player و Coach تلقائي =====
 
