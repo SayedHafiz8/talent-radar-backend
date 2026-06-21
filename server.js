@@ -20,7 +20,7 @@ const port = process.env.PORT;
 
 dbConnection()
 
-const server = createServer(app)
+const server = createServer(app)    
 initSocket(server);
 startDailySummary();
 
