@@ -20,15 +20,15 @@ const port = process.env.PORT;
 
 dbConnection()
 
-const server = createServer(app)    
+const server = createServer(app);
+server.timeout = 120000;
+
 initSocket(server);
 startDailySummary();
 
 server.listen(port, () => {
     console.log("Server running 🚀");
 });
-
-server.timeout = 120000;
 
 // Handlling Rejected Promises
 process.on('unhandledRejection', (error) => {

@@ -1,4 +1,30 @@
-// routes/playerMediaRoutes.js
+/**
+ * @swagger
+ * /players/{playerId}/media:
+ *   post:
+ *     summary: Upload player media
+ *     tags: [Media]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: playerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: Uploaded successfully
+ */
 import express from "express";
 
 import {

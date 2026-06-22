@@ -1,18 +1,24 @@
 import cron from "node-cron";
 import Player from "../../models/playedModel.js";
+import Config from "../../models/configModel.js";
 import { sendNotificationToAdmins } from "./notification.js";
 
-// ✅ احفظ آخر وقت بعتنا فيه notification
-let lastSentAt = new Date();
+const LAST_SENT_KEY = "dailySummaryLastSentAt";
 
 export const startDailySummary = () => {
-    cron.schedule("* * * * *", async () => {
+    // يعمل مرة واحدة يومياً عند منتصف الليل
+    cron.schedule("0 0 * * *", async () => {
         try {
-            // ✅ جيب اللاعبين اللي اتضافوا بعد آخر notification بس
+            // قراءة lastSentAt من DB — يبقى محفوظ بعد أي server restart
+            const config = await Config.findOne({ key: LAST_SENT_KEY }).lean();
+            const lastSentAt = config?.value
+                ? new Date(config.value)
+                : new Date(); // أول تشغيل: ابدأ من الآن (لا ترسل كل اللاعبين التاريخيين)
+
             const summary = await Player.aggregate([
                 {
                     $match: {
-                        createdAt: { $gt: lastSentAt }, // ✅ بعد آخر وقت بعتنا
+                        createdAt: { $gt: lastSentAt },
                     },
                 },
                 {
@@ -48,7 +54,7 @@ export const startDailySummary = () => {
                 },
             ]);
 
-            // ✅ لو مفيش لاعبين جدد — متبعتش حاجة
+            // لو مفيش لاعبين جدد — متبعتش حاجة ومتحدثش lastSentAt
             if (!summary.length) return;
 
             const totalPlayers = summary.reduce((acc, s) => acc + s.count, 0);
@@ -64,12 +70,15 @@ export const startDailySummary = () => {
                 createdAt: new Date(),
             });
 
-            // ✅ حدّث الوقت بعد الإرسال بس
-            lastSentAt = new Date();
-
-            console.log(`Summary sent: ${totalPlayers} players`);
+            // حفظ lastSentAt في DB بعد الإرسال الناجح
+            await Config.findOneAndUpdate(
+                { key: LAST_SENT_KEY },
+                { $set: { value: new Date() } },
+                { upsert: true }
+            );
         } catch (error) {
             console.error("Daily summary error:", error);
+            // lastSentAt لا يُحدَّث عند الخطأ — الـ run القادم يُعيد المحاولة
         }
     });
 };

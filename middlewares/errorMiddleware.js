@@ -42,14 +42,14 @@ const jwtInvalidSignture = () => {
 
 // Error handeler in production mode
 const prodErrors = (res, error) => {
-    console.log("🔥 PROD ERROR HIT");
     if(error.isOperational) {
-        console.log("👉 Sending:", error.message);
         res.status(error.statusCode).json({
             status: error.status,
             message: error.message
         })
     }else {
+        // لا نلوج التفاصيل في production لتجنب تسريب البيانات الحساسة
+        console.error("Unhandled error:", error.name, error.statusCode);
         res.status(error.statusCode).json({
             status: 'error',
             message: 'Something went wrong, please try again later'

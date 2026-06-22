@@ -31,7 +31,7 @@ export const creating = (model, field = null, populateOptions = null) => {
         }
 
         res.status(201).json({
-            status: "Success",
+            status: "success",
             data: {
                 document,
             },
@@ -60,7 +60,7 @@ export const gettingAll = (model, refFiled = null, searchFields = [], populateOp
             return next(new AppError(`No documents yet`, 404));
         }
         res.status(200).json({
-            status: "Success",
+            status: "success",
             count: documents.length,
             pagination,
             data: {
@@ -81,7 +81,7 @@ export const gettingSpecific = (model, populateOptions = null) => {
             return next(new AppError(`No document for this Id '${id}'`, 404));
         }
         res.status(200).json({
-            status: "Success",
+            status: "success",
             data: {
                 document,
             },
@@ -105,7 +105,7 @@ export const updating = (model, populateOptions = null) => {
             return next(new AppError(`No document for This Id: ${id}`, 404));
         }
         res.status(200).json({
-            status: "Success",
+            status: "success",
             data: {
                 document,
             },
@@ -152,7 +152,7 @@ export const restoring = (model, populateOptions = null) => {
             return next(new AppError(`No document for This Id: ${id}`, 404));
         }
         res.status(200).json({
-            status: "Success",
+            status: "success",
             data: {
                 document,
             },

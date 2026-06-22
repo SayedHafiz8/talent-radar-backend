@@ -32,7 +32,8 @@ const fileFilter = (req, file, cb) => {
     if (allowed.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error("File type not allowed"), false);
+        // null وليس Error — العزل في multer، الـ controller يتعامل مع req.file === undefined
+        cb(null, false);
     }
 };
 

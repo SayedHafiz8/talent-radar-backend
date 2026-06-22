@@ -33,20 +33,12 @@ const allowedTypes = [
 // ============================
 
 const compressImage = async (inputPath) => {
-
-    const output = await tmp.file({
-        postfix: ".jpg"
-    });
+    // discardDescriptor: true — بيمنع فتح fd لأننا محتاجين path بس
+    const output = await tmp.file({ postfix: ".jpg", discardDescriptor: true });
     await sharp(inputPath)
-        .resize({
-            width: 1920,
-            withoutEnlargement: true
-        })
-        .jpeg({
-            quality: 80
-        })
+        .resize({ width: 1920, withoutEnlargement: true })
+        .jpeg({ quality: 80 })
         .toFile(output.path);
-
 
     return output.path;
 };
@@ -54,23 +46,22 @@ const compressImage = async (inputPath) => {
 // compress video
 // ============================
 const compressVideo = async (inputPath) => {
-    const output = await tmp.file({
-        postfix: ".mp4"
-    });
-    await new Promise((resolve, reject)=>{
+    // discardDescriptor: true — بيمنع فتح fd لأننا محتاجين path بس
+    const output = await tmp.file({ postfix: ".mp4", discardDescriptor: true });
+    await new Promise((resolve, reject) => {
         ffmpeg(inputPath)
-        .videoCodec("libx264")
-        .audioCodec("aac")
-        .outputOptions([
-            "-crf 30",
-            "-preset veryfast",
-            "-vf scale=854:-2",
-            "-movflags +faststart"
-        ])
-        .format("mp4")
-        .on("end", resolve)
-        .on("error", reject)
-        .save(output.path);
+            .videoCodec("libx264")
+            .audioCodec("aac")
+            .outputOptions([
+                "-crf 30",
+                "-preset veryfast",
+                "-vf scale=854:-2",
+                "-movflags +faststart"
+            ])
+            .format("mp4")
+            .on("end", resolve)
+            .on("error", reject)
+            .save(output.path);
     });
     return output.path;
 };
@@ -111,21 +102,12 @@ export const setPlayerToBody = (
 
 export const uploadMedia = asyncHandler(
 async(req,res,next)=>{
-    if(!req.file){
-        return next(
-            new AppError(
-                "يجب رفع ملف",
-                400
-            )
-        );
+    if (!req.file) {
+        // إما مفيش ملف أو multer رفضه (نوع غير مسموح)
+        return next(new AppError("يجب رفع ملف صحيح (صورة: jpg/png/webp | فيديو: mp4)", 400));
     }
-    if(!allowedTypes.includes(req.file.mimetype)){
-        return next(
-            new AppError(
-                "نوع الملف غير مسموح",
-                400
-            )
-        );
+    if (!allowedTypes.includes(req.file.mimetype)) {
+        return next(new AppError("نوع الملف غير مسموح (jpg, png, webp, mp4 فقط)", 400));
     }
     const isVideo =
         req.file.mimetype.startsWith("video");
@@ -177,7 +159,7 @@ async(req,res,next)=>{
             });
 
         res.status(201).json({
-            status:"Success",
+            status:"success",
             data:{
                 document:media
             }
@@ -246,6 +228,6 @@ async(req,res,next)=>{
     await media.deleteOne();
 
     res.status(204).json({
-        status:"Success"
+        status:"success"
     });
 });

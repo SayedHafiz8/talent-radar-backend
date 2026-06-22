@@ -1,6 +1,28 @@
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Success
+ */
 import express from "express";
 import { changeLoggedUserPass, forgotPassword, login, logout, protect, refreshToken, resetPassword, signup, updateLoggedUser, verifyResetPassword } from "../controllers/authController.js";
-import { singupValidate, updateLoggedUserVal } from "../utils/validation/authValidation.js";
+import { singupValidate, loginValidate, updateLoggedUserVal } from "../utils/validation/authValidation.js";
 import { changeUserPassword } from "../utils/validation/userValidation.js";
 
 
@@ -11,7 +33,7 @@ authRouter.route('/signup')
 
 
 authRouter.route('/login')
-            .post(login);
+            .post(loginValidate, login);
 
 
 authRouter.route('/forgotPassword')

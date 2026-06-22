@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Player from "../models/playedModel.js";
 import ScoutingReport from "../models/scoutingReportModel.js";
 import PlayerMedia from "../models/playerMediaModel.js";
@@ -7,25 +8,28 @@ import {
     sendNotificationToAdmins,
     sendNotificationToUser,
 } from "../socket/handlers/notification.js";
+import { getConnectedUsers } from "../socket/index.js";
 
 // ============================
 // helpers
 // ============================
 const getAdminDashboardData = async () => {
+    // 4 countDocuments دُمجت في aggregate واحد (4 round-trips → 1)
     const [
-        totalPlayers,
-        selectedPlayers,
-        pendingPlayers,
-        rejectedPlayers,
+        playerStats,
         totalReports,
         totalMedia,
         totalCoaches,
         topCoaches,
     ] = await Promise.all([
-        Player.countDocuments(),
-        Player.countDocuments({ status: "selected" }),
-        Player.countDocuments({ status: "pending" }),
-        Player.countDocuments({ status: "rejected" }),
+        Player.aggregate([
+            {
+                $facet: {
+                    byStatus: [{ $group: { _id: "$status", count: { $sum: 1 } } }],
+                    total:    [{ $count: "count" }],
+                },
+            },
+        ]),
         ScoutingReport.countDocuments(),
         PlayerMedia.countDocuments(),
         User.countDocuments({ role: "coach" }),
@@ -53,6 +57,15 @@ const getAdminDashboardData = async () => {
         ]),
     ]);
 
+    const facet = playerStats[0];
+    const statusMap = {};
+    facet.byStatus.forEach((s) => { statusMap[s._id] = s.count; });
+
+    const totalPlayers    = facet.total[0]?.count    ?? 0;
+    const selectedPlayers = statusMap["selected"]    ?? 0;
+    const pendingPlayers  = statusMap["pending"]     ?? 0;
+    const rejectedPlayers = statusMap["rejected"]    ?? 0;
+
     return {
         totalPlayers,
         selectedPlayers,
@@ -70,19 +83,28 @@ const getAdminDashboardData = async () => {
 };
 
 const getCoachDashboardData = async (coachId) => {
-    const [
-        totalPlayers,
-        selectedPlayers,
-        pendingPlayers,
-        rejectedPlayers,
-        totalReports,
-    ] = await Promise.all([
-        Player.countDocuments({ coach: coachId }),
-        Player.countDocuments({ coach: coachId, status: "selected" }),
-        Player.countDocuments({ coach: coachId, status: "pending" }),
-        Player.countDocuments({ coach: coachId, status: "rejected" }),
+    // 4 countDocuments دُمجت في aggregate واحد (4 round-trips → 1)
+    const [playerStats, totalReports] = await Promise.all([
+        Player.aggregate([
+            { $match: { coach: new mongoose.Types.ObjectId(coachId) } },
+            {
+                $facet: {
+                    byStatus: [{ $group: { _id: "$status", count: { $sum: 1 } } }],
+                    total:    [{ $count: "count" }],
+                },
+            },
+        ]),
         ScoutingReport.countDocuments({ coach: coachId }),
     ]);
+
+    const facet = playerStats[0];
+    const statusMap = {};
+    facet.byStatus.forEach((s) => { statusMap[s._id] = s.count; });
+
+    const totalPlayers    = facet.total[0]?.count    ?? 0;
+    const selectedPlayers = statusMap["selected"]    ?? 0;
+    const pendingPlayers  = statusMap["pending"]     ?? 0;
+    const rejectedPlayers = statusMap["rejected"]    ?? 0;
 
     return {
         totalPlayers,
@@ -110,7 +132,7 @@ export const getCoachDashboard = asyncHandler(async (req, res, next) => {
     const data = await getCoachDashboardData(coachId);
 
     res.status(200).json({
-        status: "Success",
+        status: "success",
         data,
     });
 });
@@ -122,7 +144,7 @@ export const adminDashboard = asyncHandler(async (req, res) => {
     const data = await getAdminDashboardData();
 
     res.status(200).json({
-        status: "Success",
+        status: "success",
         data,
     });
 });
@@ -132,6 +154,8 @@ export const adminDashboard = asyncHandler(async (req, res) => {
 // ============================
 export const emitAdminDashboardUpdate = async () => {
     try {
+        // تجنب الـ aggregation لو ما في حد متصل أصلاً
+        if (getConnectedUsers().size === 0) return;
         const data = await getAdminDashboardData();
         await sendNotificationToAdmins({
             type: "ADMIN_DASHBOARD_UPDATE",
@@ -144,6 +168,8 @@ export const emitAdminDashboardUpdate = async () => {
 
 export const emitCoachDashboardUpdate = async (coachId) => {
     try {
+        // تجنب الـ aggregation لو الـ coach أوفلاين
+        if (!getConnectedUsers().get(coachId.toString())) return;
         const data = await getCoachDashboardData(coachId);
         sendNotificationToUser(coachId.toString(), {
             type: "COACH_DASHBOARD_UPDATE",

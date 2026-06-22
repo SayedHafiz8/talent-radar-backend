@@ -6,7 +6,9 @@ let io;
 const connectedUsers = new Map();
 
 export const initSocket = (server) => {
-    console.log("SOCKET INITIALIZED");
+    const isDev = process.env.NODE_ENV !== "production";
+
+    if (isDev) console.log("SOCKET INITIALIZED");
 
   io = new Server(server, {
     cors: {
@@ -17,38 +19,25 @@ export const initSocket = (server) => {
 
   // ✅ Socket Authentication Middleware
   io.use(async (socket, next) => {
-    console.log("SOCKET MIDDLEWARE HIT");
-
     try {
         const token =
             socket.handshake.auth.token ||
             socket.handshake.query.token;
 
-        console.log("TOKEN:", token);
-
-
         if (!token) {
-            console.log("NO TOKEN");
             return next(new Error("Unauthorized"));
         }
-
 
         const decoded = jwt.verify(
             token,
             process.env.JWT_SECRET_KEY
         );
 
-
         socket.userId = decoded.userId;
-
-        console.log("AUTH USER:", socket.userId);
 
         next();
 
     } catch (err) {
-
-        console.log("AUTH ERROR:", err.message);
-
         next(new Error("Unauthorized"));
     }
 });
@@ -56,23 +45,15 @@ export const initSocket = (server) => {
 
 
 io.on("connection", (socket) => {
-
-    console.log("🔥 CONNECTION EVENT");
-
-    console.log("USER:", socket.userId);
-
-    // باقي الكود
-
-    console.log("Connected:", socket.userId);
-
     const userId = socket.userId.toString();
+
+    if (isDev) console.log(`Socket connected: ${userId}`);
 
     if (!connectedUsers.has(userId)) {
       connectedUsers.set(userId, new Set());
     }
 
     connectedUsers.get(userId).add(socket.id);
-    console.log([...connectedUsers]);
 
     socket.on("disconnect", () => {
       const userSockets = connectedUsers.get(userId);
@@ -85,7 +66,7 @@ io.on("connection", (socket) => {
         }
       }
 
-      console.log(`User disconnected: ${userId}`);
+      if (isDev) console.log(`Socket disconnected: ${userId}`);
     });
   });
 

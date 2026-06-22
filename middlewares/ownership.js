@@ -45,10 +45,11 @@ export const checkReportOwnership = asyncHandler(async (req, res, next) => {
 export const checkMediaOwnership = asyncHandler(async (req, res, next) => {
     if (req.user.role === "admin") return next();
 
+    // lean() — محتاجين player.coach و player._id بس
     const media = await PlayerMedia.findById(req.params.id).populate({
         path: "player",
         select: "coach",
-    });
+    }).lean();
 
     if (!media) {
         return next(new AppError("Media not found", 404));

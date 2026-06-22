@@ -1,3 +1,5 @@
+
+
 import express from "express";
 import { getAll, create, getSpecific, deleting, update, setUserIdToBody, updatePlayerStatus } from "../controllers/playerController.js";
 import { createValidate, getAllValidate, deleteValidate, getSpecificValidate, updateValidate, updatePlayerStatusValidator } from "../utils/validation/playerValidation.js";
@@ -17,9 +19,9 @@ playerRouter.route('/')
 
 
 playerRouter.route('/:id')
-            .get(protect,allowedTo("coach"),getSpecificValidate,getSpecific)
-            .patch(protect,allowedTo("coach"),updateValidate,update)
-            .delete(protect,allowedTo("coach"),deleteValidate,deleting)
+            .get(protect, allowedTo("coach", "admin"), getSpecificValidate, getSpecific)
+            .patch(protect, allowedTo("coach"), updateValidate, update)
+            .delete(protect, allowedTo("coach"), deleteValidate, deleting)
 
 playerRouter.route('/:id/status')
             .patch(protect,allowedTo('admin'), updatePlayerStatusValidator, updatePlayerStatus)

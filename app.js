@@ -11,9 +11,11 @@ import teamRouter from "./routes/teamrouter.js";
 import playerRouter from "./routes/playerRouter.js";
 import userRouter from "./routes/userRouter.js";
 import authRouter from "./routes/authRouter .js";
-import scoutingRouter from "./routes/scoutingReportRouter.js";
-import mediaRouter from "./routes/playerMediaRouter.js";
 import dashboardRouter from "./routes/dashboardRouter.js";
+import swaggerUi from "swagger-ui-express";
+import specs from "./utils/swagger.js";
+
+
 
 
 // Express Meddilware
@@ -22,7 +24,13 @@ const app = express();
 
 // security middleware
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL }));
+app.use(cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true,          // مطلوب لإرسال refreshToken cookie من Angular
+    optionsSuccessStatus: 200,  // لـ legacy browsers
+}));
+
+// General limiter — 100 request / 15 min
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -32,6 +40,17 @@ const limiter = rateLimit({
     }
 });
 app.use("/api", limiter);
+
+// Auth limiter — 15 request / 15 min (يمنع brute force على login/signup)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 15,
+    message: {
+        status: "error",
+        message: "Too many auth requests, please try again later"
+    }
+});
+app.use("/api/v1/auth", authLimiter);
 
 // Body parser
 app.use(express.json())
@@ -43,11 +62,11 @@ app.use('/api/v1/teams', teamRouter);
 app.use('/api/v1/players', playerRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/auth', authRouter);
-app.use('/api/v1/reports', scoutingRouter);
-app.use('/api/v1/media', mediaRouter);
-app.use('/api/v1/dashboard', dashboardRouter)
+app.use('/api/v1/dashboard', dashboardRouter);
 
-
+if (process.env.NODE_ENV !== "production") {
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
+}
 // DEFULT ROUTE
 app.use((req, res, next) => {
     next(new AppError(`Cannot find the resource '${req.originalUrl}' `, 404));

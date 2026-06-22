@@ -100,8 +100,8 @@ playerSchema.pre('save', async function () {
     const age = calculateAge(this.dateOfBirth);
     
     // ❌ منع الأعمار الغلط
-    if (age < 8 || age > 18 ) {
-        throw new Error(`Age must be between (8 - 18) `);
+    if (age < 10 || age > 18 ) {
+        throw new Error(`Age must be between (10 - 18) `);
     }
 
     // ✅ ربط الفئة
@@ -125,6 +125,11 @@ playerSchema.index({ coach: 1, position: 1 });
 playerSchema.index({ coach: 1, preferredFoot: 1 });
 // فلترة بالفئة العمرية
 playerSchema.index({ coach: 1, ageGroup: 1 });
+// dashboard aggregations — status filtering & grouping
+playerSchema.index({ status: 1 });              // admin dashboard: group by status across all players
+playerSchema.index({ coach: 1, status: 1 });    // coach dashboard: match coach then group by status
+// daily summary — range query on createdAt across all coaches
+playerSchema.index({ createdAt: 1 });           // dailySummary: $match createdAt > lastSentAt
 
 
 
@@ -138,8 +143,8 @@ playerSchema.pre('findOneAndUpdate', async function () {
 
         const age = calculateAge(data.dateOfBirth);
 
-        if(age < 8 || age > 18){
-            throw new Error("Age must be between 8 - 18");
+        if(age < 10 || age > 18){
+            throw new Error("Age must be between 10 - 18");
         }
 
         const ageGroup = await AgeGroup.findOne({age});

@@ -47,7 +47,7 @@ const sendTokenResponse = async (res, user, statusCode) => {
     sendRefreshTokenCookie(res, refreshToken);
 
     res.status(statusCode).json({
-        status: "Success",
+        status: "success",
         data: {
             user,
             accessToken,
@@ -110,7 +110,7 @@ export const refreshToken = asyncHandler(async (req, res, next) => {
     const newAccessToken = generateAccessToken(user._id);
 
     res.status(200).json({
-        status: "Success",
+        status: "success",
         data: {
             accessToken: newAccessToken,
         }
@@ -135,7 +135,7 @@ export const logout = asyncHandler(async (req, res, next) => {
     });
 
     res.status(200).json({
-        status: "Success",
+        status: "success",
         message: "Logged out successfully",
     });
 });
@@ -190,7 +190,7 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
     const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
-        return next(new AppError(`There is no user with this email ${req.body.email}`));
+        return next(new AppError(`There is no user with this email ${req.body.email}`, 404));
     }
 
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -312,7 +312,7 @@ export const updateLoggedUser = asyncHandler(async (req, res, next) => {
     );
 
     res.status(200).json({
-        status: "Success",
+        status: "success",
         data: { user },
     });
 });

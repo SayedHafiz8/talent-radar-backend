@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 
 import Player from "../models/playedModel.js";
+import AppError from "../utils/appError.js";
 import { creating, deleteOne, gettingAll, gettingSpecific, updating } from "../services/services.js";
 import { sendNotificationToUser, sendNotificationToAdmins } from "../socket/handlers/notification.js";
 import {
@@ -24,12 +25,13 @@ export const create = asyncHandler(async (req, res, next) => {
 
     const player = await Player.create(req.body);
 
-    await emitAdminDashboardUpdate();
+    // fire-and-forget — الـ response لا ينتظر الـ dashboard update
+    emitAdminDashboardUpdate();
     res.status(201).json({
-        status: "Success",
+        status: "success",
         data: { document: player },
     });
-}); 
+});
 
 // @desc    Get all age groups
 // @route   POST api/v1/ages
@@ -62,8 +64,9 @@ export const updatePlayerStatus = asyncHandler(async (req, res, next) => {
         return next(new AppError("Player not found", 404));
     }
 
-    await emitAdminDashboardUpdate();
-    await emitCoachDashboardUpdate(player.coach);
+    // fire-and-forget — الـ response لا ينتظر الـ dashboard updates
+    emitAdminDashboardUpdate();
+    emitCoachDashboardUpdate(player.coach);
 
     sendNotificationToUser(player.coach.toString(), {
         type: "PLAYER_STATUS_UPDATED",
@@ -77,7 +80,7 @@ export const updatePlayerStatus = asyncHandler(async (req, res, next) => {
     });
 
     res.status(200).json({
-        status: "Success",
+        status: "success",
         data: { player },
     });
 });

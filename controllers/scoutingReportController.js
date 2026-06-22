@@ -110,7 +110,7 @@ export const getPlayerStatistics = asyncHandler(async (req, res, next) => {
     }
 
     res.status(200).json({
-        status: "Success",
+        status: "success",
         data: {
             statistics: stats[0],
         },

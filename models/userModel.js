@@ -55,12 +55,14 @@ userSchema.set("toJSON", {
         delete ret.passwordResetCode;
         delete ret.passwordResetExpires;
         delete ret.passwordResetVerified;
-        delete ret.refreshToken; 
+        delete ret.refreshToken;
         delete ret.refreshTokenExpires;
         return ret;
     }
 });
 
+// index لتسريع queries على role (admin notifications + dashboard coach count)
+userSchema.index({ role: 1 });
 
 const User = mongoose.model('User', userSchema);
 
